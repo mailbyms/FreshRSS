@@ -160,6 +160,14 @@ class FreshRSS_index_Controller extends FreshRSS_ActionController {
 			Minz_Error::error(404);
 		}
 
+		try {                                                                              
+			$feedDAO = FreshRSS_Factory::createFeedDao();    
+			$this->view->feeds = $feedDAO->listFeeds();           
+		} catch (Exception $e) {                                    
+			Minz_Log::notice($e->getMessage());                                                                          
+			Minz_Error::error(404);                                                                                                  
+		}
+
 		try {
 			$this->view->entries = FreshRSS_index_Controller::listEntriesByContext();
 		} catch (FreshRSS_EntriesGetter_Exception $e) {

@@ -649,4 +649,13 @@ SQL;
 		$res = $stm->fetchAll(PDO::FETCH_COLUMN, 0);
 		return $res[0] ?? 0;
 	}
+
+	public static function findFeed(array $feeds, int $feed_id): ?FreshRSS_Feed {
+		foreach ($feeds as $feed) {                                               
+				if ($feed->id() === $feed_id) {                                                             
+						return $feed;                                                  
+				}                                                                                                 
+		}                                                                                                                                         
+		return null;                                                                                                                           
+}
 }

@@ -21,9 +21,11 @@ foreach ($this->entries as $item) {
 			continue;
 		}
 	}
+	$feed = FreshRSS_FeedDAO::findFeed($this->feeds, $item->feedId()); 
 ?>
 		<item>
-			<title><?= $item->title() ?></title>
+			<title><?= "[".$feed->name()."]-".$item->title() ?></title>
+			<feedName><?= $feed->name() ?></feedName>
 			<link><?= $item->link() ?></link>
 			<?php
 				$authors = $item->authors();
