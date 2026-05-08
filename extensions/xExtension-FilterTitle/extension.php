@@ -12,9 +12,9 @@ class FilterTitleExtension extends Minz_Extension {
 
         if (Minz_Request::isPost()) {
             $configuration = [
-                'blacklist' => array_filter(Minz_Request::paramTextToArray('blacklist')),
+                'blacklist' => array_filter(preg_split('/\R/u', Minz_Request::paramString('blacklist', true)) ?: []),
                 'mark_as_read' => Minz_Request::paramString('mark_as_read'),
-                'whitelist' => array_filter(Minz_Request::paramTextToArray('whitelist')),
+                'whitelist' => array_filter(preg_split('/\R/u', Minz_Request::paramString('whitelist', true)) ?: []),
             ];
             $this->setSystemConfiguration($configuration);
         }
@@ -23,10 +23,11 @@ class FilterTitleExtension extends Minz_Extension {
     public function filterTitle($entry) {
         if (is_object($entry) === true) {
             //-- do check BLACKLIST ---------------------------
-            $patterns = $this->getSystemConfigurationValue('blacklist') ?? [];
+            $patterns = $this->getSystemConfigurationValue('blacklist') ?? $this->getSystemConfigurationValue('blacklist_title_keywords') ?? [];
             if (is_array($patterns)) {
                 foreach ($patterns as $pattern) {
-                    if (self::isPatternFound($entry->title(), $pattern) == true) {
+                    if ($this->isPatternFound($entry->title(), $pattern)) {
+                        Minz_Log::info(_t('ext.filter_title.warning.not_allowed_keyword', $entry->title()) . ' (Matched: ' . $pattern . ')');
                         if ($this->getSystemConfigurationValue('mark_as_read') == '1') {
                             // add entry into database and mark as read
                             $entry->_isRead(true);
@@ -44,7 +45,7 @@ class FilterTitleExtension extends Minz_Extension {
             $patterns = $this->getSystemConfigurationValue('whitelist') ?? [];
             if (is_array($patterns)) {
                 foreach ($patterns as $pattern) {
-                    if (self::isPatternFound($entry->title(), $pattern) == false) {
+                    if (!$this->isPatternFound($entry->title(), $pattern)) {
                         if ($this->getSystemConfigurationValue('mark_as_read') == '1') {
                             // add entry into database and mark as read
                             $entry->_isRead(true);
@@ -63,29 +64,27 @@ class FilterTitleExtension extends Minz_Extension {
     }
 
     private function isPatternFound(string $title, string $pattern): bool {
-        if (1 === preg_match($pattern, $title)) {
-            return true;
-        } elseif (strpos($title, $pattern) !== false) {
-            return true;
+        if ($pattern === '') {
+            return false;
         }
-        return false;
+
+        // Check if the pattern is a valid regex (starts and ends with the same delimiter)
+        if (preg_match('/^([^\w\s\\\\\/]).*?\1[a-z]*$/u', $pattern)) {
+            if (@preg_match($pattern, $title) === 1) {
+                return true;
+            }
+        }
+
+        return mb_strpos($title, $pattern) !== false;
     }
 
     public function getBlacklistData() {
-        if ($this->getSystemConfigurationValue('check_type') == '0') {
-            // 20240311 - Until version v0.0.2 there was only blacklist OR whitelist availabe
-            return implode(PHP_EOL, $this->getSystemConfigurationValue('blacklist_title_keywords') ?? []);
-        } else {
-            return implode(PHP_EOL, $this->getSystemConfigurationValue('blacklist') ?? []);
-        }
+        $blacklist = $this->getSystemConfigurationValue('blacklist') ?? $this->getSystemConfigurationValue('blacklist_title_keywords') ?? [];
+        return implode(PHP_EOL, $blacklist);
     }
 
     public function getWhitelistData() {
-        if ($this->getSystemConfigurationValue('check_type') == '1') {
-            // 20240311 - Until version v0.0.2 there was only blacklist OR whitelist availabe
-            return implode(PHP_EOL, $this->getSystemConfigurationValue('blacklist_title_keywords') ?? []);
-        } else {
-            return implode(PHP_EOL, $this->getSystemConfigurationValue('whitelist') ?? []);
-        }
+        $whitelist = $this->getSystemConfigurationValue('whitelist') ?? [];
+        return implode(PHP_EOL, $whitelist);
     }
 }
