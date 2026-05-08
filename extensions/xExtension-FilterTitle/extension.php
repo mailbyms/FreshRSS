@@ -27,7 +27,7 @@ class FilterTitleExtension extends Minz_Extension {
             if (is_array($patterns)) {
                 foreach ($patterns as $pattern) {
                     if ($this->isPatternFound($entry->title(), $pattern)) {
-                        Minz_Log::info(_t('ext.filter_title.warning.not_allowed_keyword', $entry->title()) . ' (Matched: ' . $pattern . ')');
+                        Minz_Log::notice(_t('ext.filter_title.warning.not_allowed_keyword', $entry->title()) . ' (Matched: ' . $pattern . ')');
                         if ($this->getSystemConfigurationValue('mark_as_read') == '1') {
                             // add entry into database and mark as read
                             $entry->_isRead(true);
