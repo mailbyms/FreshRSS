@@ -1,6 +1,6 @@
 <?php
 	/** @var FreshRSS_View $this */
-	if (!Minz_Request::paramBoolean('ajax')) {
+	if (!Minz_Request::paramBoolean('ajax') && !Minz_Request::paramBoolean('slider')) {
 		$this->partial('aside_configure');
 	}
 ?>
